@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import Dashboard from "@/components/dashboard";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -20,7 +19,10 @@ export default function Home() {
       console.log("No user found, redirecting to login");
       router.push("/login");
     } else if (!loading && user) {
-      console.log("User found, redirecting to dashboard:", user.username);
+      console.log(
+        "User found, redirecting to dashboard:",
+        user.user_metadata?.username
+      );
       router.push("/dashboard");
     }
   }, [user, loading, router]);

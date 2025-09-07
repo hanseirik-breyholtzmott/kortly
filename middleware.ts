@@ -10,7 +10,7 @@ const protectedRoutes = ["/profile", "/admin", "/dashboard"];
 const publicRoutes = ["/", "/auth", "/api/auth"];
 
 // Define admin-only routes
-const adminRoutes = ["/admin"];
+const adminRoutes = [];
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next({
@@ -52,9 +52,6 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // Check if the current route is admin-only
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-
   // Check if the current route is public
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
@@ -65,28 +62,6 @@ export async function middleware(req: NextRequest) {
     const redirectUrl = new URL("/", req.url);
     redirectUrl.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(redirectUrl);
-  }
-
-  // If it's an admin route, check for admin privileges
-  if (isAdminRoute && session) {
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile?.is_admin) {
-        const redirectUrl = new URL("/", req.url);
-        redirectUrl.searchParams.set("error", "insufficient_permissions");
-        return NextResponse.redirect(redirectUrl);
-      }
-    } catch (error) {
-      console.error("Error checking admin status:", error);
-      const redirectUrl = new URL("/", req.url);
-      redirectUrl.searchParams.set("error", "auth_error");
-      return NextResponse.redirect(redirectUrl);
-    }
   }
 
   // If user is authenticated and trying to access auth pages, redirect to dashboard

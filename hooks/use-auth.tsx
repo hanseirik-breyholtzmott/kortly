@@ -7,26 +7,22 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { supabase } from "@/lib/supabase";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 interface User {
   id: string;
-  username: string;
   email: string;
-  cardsCount: number;
-  joinedAt: string;
+  created_at: string;
+  user_metadata?: any;
+  raw_user_meta_data?: any;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (
-    username: string,
-    email: string,
-    password: string
-  ) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   loginWithVipps: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -41,21 +37,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if Supabase is properly configured
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_ANON_KEY
+      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
     ) {
       console.warn("Supabase not configured. Using mock authentication.");
+      console.warn(
+        "Required variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+      );
       setLoading(false);
       return;
     }
 
+    // Create client-side Supabase client
+    const supabase = createClient();
+
     // Get initial session
-    const getInitialSession = async () => {
+    const getInitialUser = async () => {
       try {
+        console.log("Getting initial session...");
+
+        // First try to get the session
         const {
           data: { session },
+          error: sessionError,
         } = await supabase.auth.getSession();
+        console.log("Session check:", {
+          session: !!session,
+          error: sessionError,
+        });
+
         if (session?.user) {
-          await loadUserProfile(session.user);
+          console.log("Session found, setting user:", session.user.email);
+          const userWithExtras = session.user as any;
+          setUser({
+            id: session.user.id,
+            email: session.user.email || "",
+            created_at: session.user.created_at,
+            user_metadata: session.user.user_metadata,
+            raw_user_meta_data: userWithExtras.raw_user_meta_data,
+            role: userWithExtras.role,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // If no session, try getUser as fallback
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        console.log("User check result:", {
+          error,
+          userId: user?.id,
+        });
+
+        if (user) {
+          console.log("User found, setting user:", user.email);
+          const userWithExtras = user as any;
+          setUser({
+            id: user.id,
+            email: user.email || "",
+            created_at: user.created_at,
+            user_metadata: user.user_metadata,
+            raw_user_meta_data: userWithExtras.raw_user_meta_data,
+            role: userWithExtras.role,
+          });
+        } else {
+          console.log("No user found");
         }
       } catch (error) {
         console.error("Error getting session:", error);
@@ -63,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
 
-    getInitialSession();
+    getInitialUser();
 
     // Listen for auth changes
     const {
@@ -76,11 +124,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (session?.user) {
-        console.log(
-          "Session found, loading user profile for:",
-          session.user.email
-        );
-        await loadUserProfile(session.user);
+        console.log("Session found, setting user:", session.user.email);
+        const userWithExtras = session.user as any;
+        setUser({
+          id: session.user.id,
+          email: session.user.email || "",
+          created_at: session.user.created_at,
+          user_metadata: session.user.user_metadata,
+          raw_user_meta_data: userWithExtras.raw_user_meta_data,
+          role: userWithExtras.role,
+        });
       } else {
         console.log("No session, clearing user");
         setUser(null);
@@ -91,64 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
-    try {
-      // Try to get user profile from database
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", supabaseUser.id)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
-        console.error("Error loading profile:", error);
-        return;
-      }
-
-      // If no profile exists, create one
-      if (!profile) {
-        const newProfile = {
-          id: supabaseUser.id,
-          username:
-            supabaseUser.user_metadata?.username ||
-            supabaseUser.email?.split("@")[0] ||
-            "user",
-          email: supabaseUser.email || "",
-          cards_count: 0,
-          joined_at: new Date().toISOString().split("T")[0],
-        };
-
-        const { error: insertError } = await supabase
-          .from("profiles")
-          .insert(newProfile);
-
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          return;
-        }
-
-        setUser({
-          id: newProfile.id,
-          username: newProfile.username,
-          email: newProfile.email,
-          cardsCount: newProfile.cards_count,
-          joinedAt: newProfile.joined_at,
-        });
-      } else {
-        setUser({
-          id: profile.id,
-          username: profile.username,
-          email: profile.email,
-          cardsCount: profile.cards_count,
-          joinedAt: profile.joined_at,
-        });
-      }
-    } catch (error) {
-      console.error("Error in loadUserProfile:", error);
-    }
-  };
-
   const login = async (email: string, password: string) => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -158,19 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (
-    username: string,
-    email: string,
-    password: string
-  ) => {
+  const register = async (email: string, password: string) => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          username,
-        },
-      },
     });
     if (error) {
       throw new Error(error.message);
@@ -186,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signOut();
     if (error) {
       throw new Error(error.message);

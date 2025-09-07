@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/hooks/use-auth"
-import { usePokemonCards } from "@/hooks/use-pokemon-cards"
+import { useState, useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
+import { usePokemonCards } from "@/hooks/use-pokemon-cards";
 import {
   Search,
   Filter,
@@ -22,16 +28,18 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function Collection() {
-  const { user } = useAuth()
-  const { getUserCards } = usePokemonCards()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState("all")
-  const [filterRarity, setFilterRarity] = useState("all")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [selectedPhotos, setSelectedPhotos] = useState<{ [cardId: string]: number }>({})
+  const { user } = useAuth();
+  const { getUserCards } = usePokemonCards();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterRarity, setFilterRarity] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedPhotos, setSelectedPhotos] = useState<{
+    [cardId: string]: number;
+  }>({});
 
   const dummyCards = [
     {
@@ -130,64 +138,65 @@ export default function Collection() {
       uploadedBy: user?.id || "demo",
       description: "Fighting-type with four powerful arms",
     },
-  ]
+  ];
 
-  const realUserCards = user ? getUserCards(user.id) : []
-  const userCards = realUserCards.length > 0 ? realUserCards : dummyCards
+  const realUserCards = user ? getUserCards(user.id) : [];
+  const userCards = realUserCards.length > 0 ? realUserCards : dummyCards;
 
-  console.log("[v0] Current user:", user)
-  console.log("[v0] User cards:", userCards)
+  console.log("[v0] Current user:", user);
+  console.log("[v0] User cards:", userCards);
 
   const filteredCards = useMemo(() => {
     return userCards.filter((card) => {
       const matchesSearch =
         card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.set.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesType = filterType === "all" || card.type === filterType
-      const matchesRarity = filterRarity === "all" || card.rarity === filterRarity
+        card.set.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || card.type === filterType;
+      const matchesRarity =
+        filterRarity === "all" || card.rarity === filterRarity;
 
-      return matchesSearch && matchesType && matchesRarity
-    })
-  }, [userCards, searchTerm, filterType, filterRarity])
+      return matchesSearch && matchesType && matchesRarity;
+    });
+  }, [userCards, searchTerm, filterType, filterRarity]);
 
   const getCardPhotos = (card: any) => {
-    const photos = []
+    const photos = [];
 
     if (card.photos?.front) {
-      photos.push({ type: "front", url: card.photos.front })
+      photos.push({ type: "front", url: card.photos.front });
     } else if (card.imageUrl) {
-      photos.push({ type: "front", url: card.imageUrl })
+      photos.push({ type: "front", url: card.imageUrl });
     }
 
     if (card.photos?.back) {
-      photos.push({ type: "back", url: card.photos.back })
+      photos.push({ type: "back", url: card.photos.back });
     }
 
     if (card.photos?.damage && card.photos.damage.length > 0) {
       card.photos.damage.forEach((damageUrl: string, index: number) => {
-        photos.push({ type: "damage", url: damageUrl, index })
-      })
+        photos.push({ type: "damage", url: damageUrl, index });
+      });
     }
 
-    return photos
-  }
+    return photos;
+  };
 
   const navigatePhoto = (cardId: string, direction: "prev" | "next") => {
-    const card = filteredCards.find((c) => c.id === cardId)
-    if (!card) return
+    const card = filteredCards.find((c) => c.id === cardId);
+    if (!card) return;
 
-    const photos = getCardPhotos(card)
-    const currentIndex = selectedPhotos[cardId] || 0
+    const photos = getCardPhotos(card);
+    const currentIndex = selectedPhotos[cardId] || 0;
 
-    let newIndex
+    let newIndex;
     if (direction === "prev") {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : photos.length - 1
+      newIndex = currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
     } else {
-      newIndex = currentIndex < photos.length - 1 ? currentIndex + 1 : 0
+      newIndex = currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
     }
 
-    setSelectedPhotos((prev) => ({ ...prev, [cardId]: newIndex }))
-  }
+    setSelectedPhotos((prev) => ({ ...prev, [cardId]: newIndex }));
+  };
 
   const rarityColors = {
     Common: "bg-gray-100 text-gray-800",
@@ -196,7 +205,7 @@ export default function Collection() {
     "Rare Holo": "bg-purple-100 text-purple-800",
     "Ultra Rare": "bg-orange-100 text-orange-800",
     "Secret Rare": "bg-red-100 text-red-800",
-  }
+  };
 
   const typeColors = {
     Fire: "bg-red-100 text-red-800",
@@ -217,10 +226,14 @@ export default function Collection() {
     Steel: "bg-zinc-100 text-zinc-800",
     Fairy: "bg-pink-100 text-pink-800",
     Normal: "bg-neutral-100 text-neutral-800",
-  }
+  };
 
-  const uniqueTypes = [...new Set(userCards.map((card) => card.type))].filter(Boolean)
-  const uniqueRarities = [...new Set(userCards.map((card) => card.rarity))].filter(Boolean)
+  const uniqueTypes = [...new Set(userCards.map((card) => card.type))].filter(
+    Boolean
+  );
+  const uniqueRarities = [
+    ...new Set(userCards.map((card) => card.rarity)),
+  ].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -231,7 +244,9 @@ export default function Collection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Cards</p>
-                <p className="text-2xl font-bold text-blue-900">{userCards.length}</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {userCards.length}
+                </p>
               </div>
               <Trophy className="h-8 w-8 text-blue-600" />
             </div>
@@ -243,7 +258,9 @@ export default function Collection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Unique Types</p>
-                <p className="text-2xl font-bold text-green-700">{uniqueTypes.length}</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {uniqueTypes.length}
+                </p>
               </div>
               <Star className="h-8 w-8 text-green-600" />
             </div>
@@ -256,7 +273,10 @@ export default function Collection() {
               <div>
                 <p className="text-sm text-gray-600">Rare Cards</p>
                 <p className="text-2xl font-bold text-purple-700">
-                  {userCards.filter((card) => card.rarity.includes("Rare")).length}
+                  {
+                    userCards.filter((card) => card.rarity.includes("Rare"))
+                      .length
+                  }
                 </p>
               </div>
               <Filter className="h-8 w-8 text-purple-600" />
@@ -270,7 +290,9 @@ export default function Collection() {
               <div>
                 <p className="text-sm text-gray-600">Collection Started</p>
                 <p className="text-sm font-medium text-gray-700">
-                  {new Date(user?.joinedAt || "").toLocaleDateString()}
+                  {user?.joinedAt
+                    ? new Date(user.joinedAt).toISOString().split("T")[0]
+                    : "N/A"}
                 </p>
               </div>
               <Calendar className="h-8 w-8 text-indigo-600" />
@@ -349,29 +371,38 @@ export default function Collection() {
       ) : (
         <div
           className={
-            viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "space-y-4"
           }
         >
           {filteredCards.map((card) => {
-            const photos = getCardPhotos(card)
-            const currentPhotoIndex = selectedPhotos[card.id] || 0
-            const currentPhoto = photos[currentPhotoIndex]
+            const photos = getCardPhotos(card);
+            const currentPhotoIndex = selectedPhotos[card.id] || 0;
+            const currentPhoto = photos[currentPhotoIndex];
 
             return (
-              <Card key={card.id} className="bg-white/90 backdrop-blur hover:shadow-lg transition-shadow">
+              <Card
+                key={card.id}
+                className="bg-white/90 backdrop-blur hover:shadow-lg transition-shadow"
+              >
                 {viewMode === "grid" ? (
                   <>
                     <div className="aspect-[3/4] overflow-hidden rounded-t-lg relative">
                       {currentPhoto?.url || card.imageUrl ? (
                         <img
                           src={currentPhoto?.url || card.imageUrl}
-                          alt={`${card.name} - ${currentPhoto?.type || "front"}`}
+                          alt={`${card.name} - ${
+                            currentPhoto?.type || "front"
+                          }`}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-300 flex items-center justify-center">
                           <div className="text-center text-gray-600">
-                            <div className="text-sm font-medium">{card.name}</div>
+                            <div className="text-sm font-medium">
+                              {card.name}
+                            </div>
                             <div className="text-xs">{card.type} Type</div>
                           </div>
                         </div>
@@ -405,7 +436,9 @@ export default function Collection() {
                               <div
                                 key={index}
                                 className={`w-2 h-2 rounded-full ${
-                                  index === currentPhotoIndex ? "bg-white" : "bg-white/50"
+                                  index === currentPhotoIndex
+                                    ? "bg-white"
+                                    : "bg-white/50"
                                 }`}
                               />
                             ))}
@@ -414,17 +447,24 @@ export default function Collection() {
                             <Camera className="h-3 w-3 mr-1" />
                             {currentPhoto?.type === "damage"
                               ? `Damage ${(currentPhoto.index || 0) + 1}`
-                              : currentPhoto?.type?.charAt(0).toUpperCase() + currentPhoto?.type?.slice(1)}
+                              : currentPhoto?.type?.charAt(0).toUpperCase() +
+                                currentPhoto?.type?.slice(1)}
                           </Badge>
                         </>
                       )}
                     </div>
                     <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2">{card.name}</h3>
+                      <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                        {card.name}
+                      </h3>
                       <div className="flex flex-wrap gap-2 mb-3">
                         {card.type && (
                           <Badge
-                            className={typeColors[card.type as keyof typeof typeColors] || "bg-gray-100 text-gray-800"}
+                            className={
+                              typeColors[
+                                card.type as keyof typeof typeColors
+                              ] || "bg-gray-100 text-gray-800"
+                            }
                           >
                             {card.type}
                           </Badge>
@@ -432,7 +472,9 @@ export default function Collection() {
                         {card.rarity && (
                           <Badge
                             className={
-                              rarityColors[card.rarity as keyof typeof rarityColors] || "bg-gray-100 text-gray-800"
+                              rarityColors[
+                                card.rarity as keyof typeof rarityColors
+                              ] || "bg-gray-100 text-gray-800"
                             }
                           >
                             {card.rarity}
@@ -459,18 +501,22 @@ export default function Collection() {
                         )}
                         {card.cardNumber && (
                           <p>
-                            <span className="font-medium">Number:</span> {card.cardNumber}
+                            <span className="font-medium">Number:</span>{" "}
+                            {card.cardNumber}
                           </p>
                         )}
                         {card.condition && (
                           <p>
-                            <span className="font-medium">Condition:</span> {card.condition}
+                            <span className="font-medium">Condition:</span>{" "}
+                            {card.condition}
                           </p>
                         )}
                         {photos.length > 1 && (
                           <p>
-                            <span className="font-medium">Photos:</span> {photos.length} (
-                            {photos.filter((p) => p.type === "damage").length} damage)
+                            <span className="font-medium">Photos:</span>{" "}
+                            {photos.length} (
+                            {photos.filter((p) => p.type === "damage").length}{" "}
+                            damage)
                           </p>
                         )}
                       </div>
@@ -483,7 +529,9 @@ export default function Collection() {
                         {currentPhoto?.url || card.imageUrl ? (
                           <img
                             src={currentPhoto?.url || card.imageUrl}
-                            alt={`${card.name} - ${currentPhoto?.type || "front"}`}
+                            alt={`${card.name} - ${
+                              currentPhoto?.type || "front"
+                            }`}
                             className="w-20 h-28 object-cover rounded"
                           />
                         ) : (
@@ -521,12 +569,16 @@ export default function Collection() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2">{card.name}</h3>
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                          {card.name}
+                        </h3>
                         <div className="flex flex-wrap gap-2 mb-3">
                           {card.type && (
                             <Badge
                               className={
-                                typeColors[card.type as keyof typeof typeColors] || "bg-gray-100 text-gray-800"
+                                typeColors[
+                                  card.type as keyof typeof typeColors
+                                ] || "bg-gray-100 text-gray-800"
                               }
                             >
                               {card.type}
@@ -535,7 +587,9 @@ export default function Collection() {
                           {card.rarity && (
                             <Badge
                               className={
-                                rarityColors[card.rarity as keyof typeof rarityColors] || "bg-gray-100 text-gray-800"
+                                rarityColors[
+                                  card.rarity as keyof typeof rarityColors
+                                ] || "bg-gray-100 text-gray-800"
                               }
                             >
                               {card.rarity}
@@ -557,25 +611,34 @@ export default function Collection() {
                         <div className="text-sm text-gray-600 grid grid-cols-2 gap-2">
                           {card.set && (
                             <p>
-                              <span className="font-medium">Set:</span> {card.set}
+                              <span className="font-medium">Set:</span>{" "}
+                              {card.set}
                             </p>
                           )}
                           {card.cardNumber && (
                             <p>
-                              <span className="font-medium">Number:</span> {card.cardNumber}
+                              <span className="font-medium">Number:</span>{" "}
+                              {card.cardNumber}
                             </p>
                           )}
                           {card.condition && (
                             <p>
-                              <span className="font-medium">Condition:</span> {card.condition}
+                              <span className="font-medium">Condition:</span>{" "}
+                              {card.condition}
                             </p>
                           )}
                           <p>
-                            <span className="font-medium">Added:</span> {new Date(card.uploadedAt).toLocaleDateString()}
+                            <span className="font-medium">Added:</span>{" "}
+                            {
+                              new Date(card.uploadedAt)
+                                .toISOString()
+                                .split("T")[0]
+                            }
                           </p>
                           {photos.length > 1 && (
                             <p>
-                              <span className="font-medium">Photos:</span> {photos.length}
+                              <span className="font-medium">Photos:</span>{" "}
+                              {photos.length}
                             </p>
                           )}
                           {currentPhoto?.type && (
@@ -583,20 +646,25 @@ export default function Collection() {
                               <span className="font-medium">Viewing:</span>{" "}
                               {currentPhoto.type === "damage"
                                 ? `Damage ${(currentPhoto.index || 0) + 1}`
-                                : currentPhoto.type.charAt(0).toUpperCase() + currentPhoto.type.slice(1)}
+                                : currentPhoto.type.charAt(0).toUpperCase() +
+                                  currentPhoto.type.slice(1)}
                             </p>
                           )}
                         </div>
-                        {card.description && <p className="text-sm text-gray-600 mt-2 italic">{card.description}</p>}
+                        {card.description && (
+                          <p className="text-sm text-gray-600 mt-2 italic">
+                            {card.description}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 )}
               </Card>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }
