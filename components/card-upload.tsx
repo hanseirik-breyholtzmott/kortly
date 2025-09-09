@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -131,11 +132,7 @@ type CardFormData = z.infer<typeof cardFormSchema>;
 type PhotoType = "front" | "back" | "damage";
 
 interface CardUploadProps {
-  user?: {
-    id: string;
-    email?: string;
-    [key: string]: unknown;
-  };
+  user?: User;
 }
 
 interface ImagePreviews {

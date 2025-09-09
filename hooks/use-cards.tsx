@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { cardsService, type CardData } from "@/lib/supabase-cards";
+import type { User } from "@supabase/supabase-js";
 
 interface Card extends CardData {
   id: string;
@@ -11,7 +12,7 @@ interface Card extends CardData {
 }
 
 interface UseCardsProps {
-  user?: any;
+  user?: User;
 }
 
 interface UseCardsReturn {

@@ -1,13 +1,10 @@
 "use client";
 
 import CardUpload from "@/components/card-upload";
+import type { User } from "@supabase/supabase-js";
 
 interface CardUploadsTabProps {
-  user?: {
-    id: string;
-    email?: string;
-    [key: string]: unknown;
-  };
+  user?: User;
 }
 
 export function CardUploadsTab({ user }: CardUploadsTabProps) {

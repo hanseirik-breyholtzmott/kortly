@@ -1,17 +1,9 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
+
 interface ProfileTabProps {
-  user?: {
-    id: string;
-    email?: string;
-    created_at: string;
-    role?: string;
-    user_metadata?: {
-      username?: string;
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  };
+  user?: User;
 }
 
 export function ProfileTab({ user }: ProfileTabProps) {

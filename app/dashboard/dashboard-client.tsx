@@ -12,9 +12,7 @@ import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-type User = SupabaseUser & {
-  [key: string]: unknown;
-};
+type User = SupabaseUser;
 
 interface DashboardClientProps {
   user: User;

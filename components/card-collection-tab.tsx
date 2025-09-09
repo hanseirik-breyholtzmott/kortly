@@ -6,13 +6,10 @@ import { Grid3X3, Star, DollarSign, Trophy } from "lucide-react";
 import { useCards } from "@/hooks/use-cards";
 import { CardDisplay } from "@/components/card-display";
 import { useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 interface CardCollectionTabProps {
-  user?: {
-    id: string;
-    email?: string;
-    [key: string]: unknown;
-  };
+  user?: User;
 }
 
 export function CardCollectionTab({ user }: CardCollectionTabProps) {
