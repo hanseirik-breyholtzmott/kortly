@@ -29,42 +29,42 @@ export default function Leaderboard() {
   const { user } = useAuth();
   const { getAllCards } = usePokemonCards();
 
-  // Mock users data with the current user
-  const allUsers = [
-    {
-      id: "1",
-      username: "AshKetchum",
-      email: "ash@pokemon.com",
-      joinedAt: "2024-01-15",
-    },
-    {
-      id: "2",
-      username: "MistyWater",
-      email: "misty@pokemon.com",
-      joinedAt: "2024-02-01",
-    },
-    {
-      id: "3",
-      username: "BrockRock",
-      email: "brock@pokemon.com",
-      joinedAt: "2024-02-10",
-    },
-    {
-      id: "4",
-      username: "GaryOak",
-      email: "gary@pokemon.com",
-      joinedAt: "2024-01-20",
-    },
-    {
-      id: "5",
-      username: "TeamRocket",
-      email: "rocket@pokemon.com",
-      joinedAt: "2024-02-15",
-    },
-    ...(user && !["1", "2", "3", "4", "5"].includes(user.id) ? [user] : []),
-  ];
-
   const leaderboardData = useMemo(() => {
+    // Mock users data with the current user
+    const allUsers = [
+      {
+        id: "1",
+        username: "AshKetchum",
+        email: "ash@pokemon.com",
+        joinedAt: "2024-01-15",
+      },
+      {
+        id: "2",
+        username: "MistyWater",
+        email: "misty@pokemon.com",
+        joinedAt: "2024-02-01",
+      },
+      {
+        id: "3",
+        username: "BrockRock",
+        email: "brock@pokemon.com",
+        joinedAt: "2024-02-10",
+      },
+      {
+        id: "4",
+        username: "GaryOak",
+        email: "gary@pokemon.com",
+        joinedAt: "2024-01-20",
+      },
+      {
+        id: "5",
+        username: "TeamRocket",
+        email: "rocket@pokemon.com",
+        joinedAt: "2024-02-15",
+      },
+      ...(user && !["1", "2", "3", "4", "5"].includes(user.id) ? [user] : []),
+    ];
+
     const allCards = getAllCards();
 
     const userStats = allUsers.map((u) => {
@@ -102,7 +102,7 @@ export default function Leaderboard() {
     });
 
     return userStats;
-  }, [getAllCards, allUsers]);
+  }, [getAllCards, user]);
 
   const currentUserRank = leaderboardData.find((u) => u.id === user?.id);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -400,11 +401,13 @@ export default function Collection() {
                   <>
                     <div className="aspect-[3/4] overflow-hidden rounded-t-lg relative">
                       {currentPhoto?.url || card.imageUrl ? (
-                        <img
+                        <Image
                           src={currentPhoto?.url || card.imageUrl}
                           alt={`${card.name} - ${
                             currentPhoto?.type || "front"
                           }`}
+                          width={300}
+                          height={400}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -537,11 +540,13 @@ export default function Collection() {
                     <div className="flex gap-4">
                       <div className="relative">
                         {currentPhoto?.url || card.imageUrl ? (
-                          <img
+                          <Image
                             src={currentPhoto?.url || card.imageUrl}
                             alt={`${card.name} - ${
                               currentPhoto?.type || "front"
                             }`}
+                            width={80}
+                            height={112}
                             className="w-20 h-28 object-cover rounded"
                           />
                         ) : (

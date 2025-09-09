@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -155,7 +156,7 @@ export default function CardUpload({ user }: CardUploadProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const form = useForm<CardFormData>({
-    resolver: zodResolver(cardFormSchema) as any,
+    resolver: zodResolver(cardFormSchema),
     defaultValues: {
       name: "",
       type: "",
@@ -464,9 +465,11 @@ export default function CardUpload({ user }: CardUploadProps) {
                   </Label>
                   {imagePreviews.front ? (
                     <div className="relative inline-block">
-                      <img
+                      <Image
                         src={imagePreviews.front}
                         alt="Card front preview"
+                        width={192}
+                        height={256}
                         className="w-48 h-64 object-cover rounded-lg border-2 border-blue-200"
                       />
                       <Button
@@ -525,9 +528,11 @@ export default function CardUpload({ user }: CardUploadProps) {
                   </Label>
                   {imagePreviews.back ? (
                     <div className="relative inline-block">
-                      <img
+                      <Image
                         src={imagePreviews.back}
                         alt="Card back preview"
+                        width={192}
+                        height={256}
                         className="w-48 h-64 object-cover rounded-lg border-2 border-blue-200"
                       />
                       <Button
@@ -593,9 +598,11 @@ export default function CardUpload({ user }: CardUploadProps) {
                     <div className="flex flex-wrap gap-2 mb-2">
                       {imagePreviews.damage.map((preview, index) => (
                         <div key={index} className="relative">
-                          <img
+                          <Image
                             src={preview}
                             alt={`Damage photo ${index + 1}`}
+                            width={96}
+                            height={128}
                             className="w-24 h-32 object-cover rounded border-2 border-red-200"
                           />
                           <Button

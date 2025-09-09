@@ -37,9 +37,9 @@ export default function ProgressTracker() {
   const { user } = useAuth()
   const { getUserCards } = usePokemonCards()
 
-  const userCards = user ? getUserCards(user.id) : []
-
   const progressStats = useMemo(() => {
+    const userCards = user ? getUserCards(user.id) : []
+    
     if (!userCards) return {
       uniquePokemon: 0,
       totalCards: 0,
@@ -68,7 +68,7 @@ export default function ProgressTracker() {
       typeCompletionPercentage: Math.round((typesCaught.size / POKEMON_TYPES.length) * 100),
       rarityCompletionPercentage: Math.round((raritiesCollected.size / RARITIES.length) * 100),
     }
-  }, [userCards])
+  }, [user, getUserCards])
 
   const achievements = useMemo(() => {
     const achievements = []
