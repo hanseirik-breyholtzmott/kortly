@@ -10,23 +10,11 @@ import { useRouter } from "next/navigation";
 import { ProfileTab } from "@/components/profile-tab";
 import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-interface User {
-  id: string;
-  email?: string;
-  created_at: string;
-  role?: string;
-  user_metadata?: {
-    given_name?: string;
-    display_name?: string;
-    username?: string;
-    [key: string]: unknown;
-  };
-  app_metadata?: {
-    provider?: string;
-  };
+type User = SupabaseUser & {
   [key: string]: unknown;
-}
+};
 
 interface DashboardClientProps {
   user: User;
@@ -113,8 +101,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                   style={{ backgroundColor: "var(--aqua-mint-500)" }}
                 ></div>
                 <span
-                  className="text-sm font-medium"
-                  style={{ color: "var(--aqua-mint-700)" }}
+                  className="text-sm font-medium text-black"
                 >
                   {user.user_metadata?.given_name ||
                     user.user_metadata?.display_name ||
@@ -127,7 +114,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <Button
                 onClick={logout}
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800"
                 disabled={isLoggingOut}
               >
                 <LogOut className="h-4 w-4" />
