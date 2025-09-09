@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 import { LogOut, Grid3X3, Target, Share2, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 import { ProfileTab } from "@/components/profile-tab";
 import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
@@ -18,14 +18,42 @@ interface DashboardClientProps {
 
 export function DashboardClient({ user }: DashboardClientProps) {
   const [copied, setCopied] = useState(false);
-  const { logout: authLogout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   const logout = async () => {
     try {
-      await authLogout();
-      // The authLogout function will handle the redirect
+      setIsLoggingOut(true);
+
+      // Call server-side logout route to clear HttpOnly cookies
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Logout failed");
+      }
+
+      // Also sign out from client-side Supabase
+      const supabase = createClient();
+      await supabase.auth.signOut();
+
+      // Clear any localStorage/sessionStorage items
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Wait a moment for everything to clear
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Redirect to login page after successful logout
+      router.push("/login");
     } catch (error) {
       console.error("Error during logout:", error);
+      setIsLoggingOut(false);
       // Force redirect to login page if logout fails
       window.location.href = "/login";
     }
@@ -83,9 +111,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 onClick={logout}
                 variant="outline"
                 className="flex items-center gap-2"
+                disabled={isLoggingOut}
               >
                 <LogOut className="h-4 w-4" />
-                Logg ut
+                {isLoggingOut ? "Logger ut..." : "Logg ut"}
               </Button>
             </div>
           </div>

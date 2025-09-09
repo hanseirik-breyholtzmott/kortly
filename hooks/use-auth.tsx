@@ -35,13 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if Supabase is properly configured
+    // Fixed: Using the correct environment variable name
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ) {
       console.warn("Supabase not configured. Using mock authentication.");
       console.warn(
-        "Required variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+        "Required variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY"
       );
       setLoading(false);
       return;
@@ -178,11 +179,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
 
     try {
+      console.log("Starting logout process...");
+
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Logout error:", error);
+        console.error("Supabase logout error:", error);
+        throw error;
       }
+
+      console.log("Successfully signed out from Supabase");
 
       // Clear user state immediately
       setUser(null);
@@ -192,13 +198,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.clear();
       sessionStorage.clear();
 
+      console.log("Cleared local storage and redirecting...");
+
       // Redirect to login page
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
+
       // Even if there's an error, clear state and redirect
       setUser(null);
       setLoading(false);
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Force redirect anyway
       window.location.href = "/login";
     }
   };

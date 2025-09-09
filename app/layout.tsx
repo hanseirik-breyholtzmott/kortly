@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { PokemonCardsProvider } from "@/hooks/use-pokemon-cards";
 export const metadata: Metadata = {
-  title: "PokéCard Collector",
+  title: "Kortly",
   description: "Collect and trade Pokemon cards - Gotta catch em all!",
   generator: "v0.app",
 };

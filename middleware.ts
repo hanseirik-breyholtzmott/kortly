@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 
 // Define protected routes that require authentication
-const protectedRoutes = ["/profile", "/admin", "/dashboard"];
+const protectedRoutes = ["/profile", "/admin", "/dashboard", "/logout"];
 
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/auth", "/api/auth"];
