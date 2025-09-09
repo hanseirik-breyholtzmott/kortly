@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const cookieStore = await cookies();
   const userDataCookie = cookieStore.get("vipps_user_data");
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     response.cookies.delete("vipps_user_data");
 
     return response;
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid user data" }, { status: 400 });
   }
 }

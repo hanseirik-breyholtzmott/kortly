@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
-import { LogOut, Grid3X3, Target, Share2, Copy, Check } from "lucide-react";
+import { LogOut, Grid3X3, Target, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProfileTab } from "@/components/profile-tab";
@@ -12,8 +12,21 @@ import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
 import { SupabaseTest } from "@/components/supabase-test";
 
+interface User {
+  id: string;
+  email?: string;
+  created_at: string;
+  user_metadata?: {
+    given_name?: string;
+    display_name?: string;
+  };
+  app_metadata?: {
+    provider?: string;
+  };
+}
+
 interface DashboardClientProps {
-  user: any;
+  user: User;
 }
 
 export function DashboardClient({ user }: DashboardClientProps) {
@@ -102,7 +115,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 >
                   {user.user_metadata?.given_name ||
                     user.user_metadata?.display_name ||
-                    user.email}
+                    user.email ||
+                    "Unknown User"}
                 </span>
               </div>
             </div>
@@ -143,7 +157,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
                   </h3>
                   <div className="space-y-1 text-sm">
                     <p>
-                      <span className="font-medium">Email:</span> {user.email}
+                      <span className="font-medium">Email:</span>{" "}
+                      {user.email || "N/A"}
                     </p>
                     <p>
                       <span className="font-medium">Bruker ID:</span> {user.id}

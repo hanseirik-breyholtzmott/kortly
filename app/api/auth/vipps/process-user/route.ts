@@ -13,10 +13,10 @@ export async function POST(request: NextRequest) {
           get(name: string) {
             return cookieStore.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: Record<string, unknown>) {
             cookieStore.set(name, value, options);
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: Record<string, unknown>) {
             cookieStore.set(name, "", { ...options, maxAge: 0 });
           },
         },
@@ -52,8 +52,9 @@ export async function POST(request: NextRequest) {
         authError
       );
       // If user already exists, try to update their metadata
-      const { data: updateUser, error: updateError } =
-        await supabase.auth.admin.updateUserById(userData.sub, {
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        userData.sub,
+        {
           phone: userData.phone_number || userData.phone,
           user_metadata: {
             display_name: userData.name,
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
             address: userData.address,
             nin: userData.nin,
           },
-        });
+        }
+      );
 
       if (updateError) {
         console.error("Failed to update auth user:", updateError);

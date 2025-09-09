@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
           get(name: string) {
             return cookieStore.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: Record<string, unknown>) {
             response.cookies.set({
               name,
               value,
@@ -240,7 +240,7 @@ export async function GET(request: NextRequest) {
               path: "/",
             });
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: Record<string, unknown>) {
             response.cookies.set({
               name,
               value: "",
@@ -289,13 +289,13 @@ export async function GET(request: NextRequest) {
       (user) => user.email === mappedUserData.email
     );
 
-    let finalUser: any = null;
+    let finalUser: { id: string; email?: string } | null = null;
 
     if (existingUser) {
       // Step 8a: Update existing user with new password
       console.log("Found existing user, updating:", existingUser.id);
 
-      const { data: updatedUser, error: updateError } =
+      const { error: updateError } =
         await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
           password: tempPassword, // Set temporary password for sign-in
           phone: mappedUserData.phone,
