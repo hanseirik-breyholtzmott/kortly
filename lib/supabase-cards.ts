@@ -117,7 +117,7 @@ class CardsService {
       if (cardData.condition) insertData.condition = cardData.condition;
       if (cardData.description) insertData.description = cardData.description;
       if (cardData.grade_company)
-        insertData.grade_compa = cardData.grade_company;
+        insertData.grade_company = cardData.grade_company;
       if (cardData.grade_score) insertData.grade_score = cardData.grade_score;
       // Add image URLs - only use columns that exist
       if (cardData.front_image_url) {
