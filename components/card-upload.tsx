@@ -124,7 +124,7 @@ const cardFormSchema = z.object({
   forSale: z.boolean(),
   frontImage: fileSchema.optional(),
   backImage: fileSchema.optional(),
-  damageImages: z.array(fileSchema).default([]),
+  damageImages: z.array(fileSchema),
 });
 
 type CardFormData = z.infer<typeof cardFormSchema>;
