@@ -15,13 +15,17 @@ interface User {
   id: string;
   email?: string;
   created_at: string;
+  role?: string;
   user_metadata?: {
     given_name?: string;
     display_name?: string;
+    username?: string;
+    [key: string]: unknown;
   };
   app_metadata?: {
     provider?: string;
   };
+  [key: string]: unknown;
 }
 
 interface DashboardClientProps {
