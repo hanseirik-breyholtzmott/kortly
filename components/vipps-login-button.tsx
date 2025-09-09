@@ -14,7 +14,7 @@ export function VippsLoginButton() {
       await loginWithVipps();
     } catch (error) {
       console.error("Vipps login error:", error);
-      alert("Failed to login with Vipps. Please try again.");
+      alert("Kunne ikke logge inn med Vipps. Prøv igjen.");
     } finally {
       setLoading(false);
     }
@@ -29,7 +29,7 @@ export function VippsLoginButton() {
       {loading ? (
         <div className="flex items-center justify-center gap-2">
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          <span>Connecting to Vipps...</span>
+          <span>Kobler til Vipps...</span>
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3">
@@ -47,7 +47,7 @@ export function VippsLoginButton() {
               fill="currentColor"
             />
           </svg>
-          <span className="font-semibold">Log in with Vipps</span>
+          <span className="font-semibold">Logg inn med Vipps</span>
         </div>
       )}
     </Button>

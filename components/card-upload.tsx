@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,30 +80,49 @@ const CONDITIONS = [
 
 const GRADING_COMPANIES = ["PSA", "BGS (Beckett)", "CGC", "SGC", "Other"];
 
-// Zod schema for form validation
+// File validation schema
+const fileSchema = z
+  .instanceof(File)
+  .refine(
+    (file) => file.size <= 10 * 1024 * 1024,
+    "File size must be less than 10MB"
+  )
+  .refine((file) => {
+    const validTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+      "image/bmp",
+      "image/tiff",
+    ];
+    return validTypes.includes(file.type);
+  }, "File must be a valid image type (PNG, JPEG, JPG, GIF, WebP, BMP, TIFF)");
+
+// Updated schema with proper file validation
 const cardFormSchema = z.object({
-  name: z.string().min(1, "Card name is required"),
+  name: z
+    .string()
+    .min(1, "Card name is required")
+    .max(100, "Card name too long"),
   type: z.string().optional(),
   rarity: z.string().optional(),
   set: z.string().optional(),
   cardNumber: z.string().optional(),
   condition: z.string().optional(),
-  description: z.string().optional(),
+  description: z.string().max(1000, "Description too long").optional(),
   quantity: z
     .number()
     .min(1, "Quantity must be at least 1")
     .max(99, "Quantity cannot exceed 99"),
-  isGraded: z.boolean().default(false),
+  isGraded: z.boolean(),
   gradeCompany: z.string().optional(),
   gradeScore: z.string().optional(),
-  forSale: z.boolean().default(false),
-  frontImage: z
-    .instanceof(File, { message: "Front image is required" })
-    .optional(),
-  backImage: z
-    .instanceof(File, { message: "Back image is required" })
-    .optional(),
-  damageImages: z.array(z.instanceof(File)).default([]),
+  forSale: z.boolean(),
+  frontImage: fileSchema.optional(),
+  backImage: fileSchema.optional(),
+  damageImages: z.array(fileSchema).default([]),
 });
 
 type CardFormData = z.infer<typeof cardFormSchema>;
@@ -115,19 +133,22 @@ interface CardUploadProps {
   user?: any;
 }
 
+interface ImagePreviews {
+  front: string | null;
+  back: string | null;
+  damage: string[];
+}
+
 export default function CardUpload({ user }: CardUploadProps) {
-  const { addCard } = useCards();
-  const [imagePreviews, setImagePreviews] = useState<{
-    front: string | null;
-    back: string | null;
-    damage: string[];
-  }>({
+  const { addCard } = useCards({ user });
+  const [imagePreviews, setImagePreviews] = useState<ImagePreviews>({
     front: null,
     back: null,
     damage: [],
   });
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const form = useForm<CardFormData>({
     resolver: zodResolver(cardFormSchema) as any,
@@ -144,8 +165,8 @@ export default function CardUpload({ user }: CardUploadProps) {
       gradeCompany: "",
       gradeScore: "",
       forSale: false,
-      frontImage: undefined as File | undefined,
-      backImage: undefined as File | undefined,
+      frontImage: undefined,
+      backImage: undefined,
       damageImages: [],
     },
   });
@@ -160,59 +181,86 @@ export default function CardUpload({ user }: CardUploadProps) {
       "image/bmp",
       "image/tiff",
     ];
-    return validTypes.includes(file.type);
+
+    // Check file type
+    if (!validTypes.includes(file.type)) {
+      return false;
+    }
+
+    // Check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File size must be less than 10MB");
+      return false;
+    }
+
+    return true;
   };
 
-  const processFiles = (files: FileList, photoType: PhotoType) => {
+  const processFiles = async (files: FileList, photoType: PhotoType) => {
     const validFiles = Array.from(files).filter(isValidImageFile);
 
     if (validFiles.length === 0) {
-      alert(
-        "Please select valid image files (PNG, JPEG, JPG, GIF, WebP, BMP, TIFF)"
+      setUploadError(
+        "Please select valid image files (PNG, JPEG, JPG, GIF, WebP, BMP, TIFF) under 10MB"
       );
       return;
     }
 
-    if (photoType === "damage") {
-      // Handle multiple damage photos
-      const currentDamageImages = form.getValues("damageImages") || [];
-      const updatedDamageImages = [...currentDamageImages, ...validFiles];
-      form.setValue("damageImages", updatedDamageImages);
+    // Clear any previous errors
+    setUploadError(null);
 
-      // Create previews for damage images
-      const newPreviews: string[] = [];
-      validFiles.forEach((file) => {
+    try {
+      if (photoType === "damage") {
+        // Handle multiple damage photos
+        const currentDamageImages = form.getValues("damageImages") || [];
+        const updatedDamageImages = [...currentDamageImages, ...validFiles];
+        form.setValue("damageImages", updatedDamageImages);
+
+        // Create previews for damage images
+        const newPreviews: string[] = [];
+        const previewPromises = validFiles.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const result = e.target?.result as string;
+              resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Failed to read file"));
+            reader.readAsDataURL(file);
+          });
+        });
+
+        const results = await Promise.all(previewPromises);
+        setImagePreviews((prev) => ({
+          ...prev,
+          damage: [...prev.damage, ...results],
+        }));
+      } else {
+        // Handle single front/back photos
+        const file = validFiles[0];
+        if (photoType === "front") {
+          form.setValue("frontImage", file);
+        } else {
+          form.setValue("backImage", file);
+        }
+
+        // Create preview
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
-          newPreviews.push(result);
-          if (newPreviews.length === validFiles.length) {
-            setImagePreviews((prev) => ({
-              ...prev,
-              damage: [...prev.damage, ...newPreviews],
-            }));
-          }
+          setImagePreviews((prev) => ({
+            ...prev,
+            [photoType]: result,
+          }));
+        };
+        reader.onerror = () => {
+          setUploadError("Failed to read image file");
         };
         reader.readAsDataURL(file);
-      });
-    } else {
-      // Handle single front/back photos
-      const file = validFiles[0];
-      if (photoType === "front") {
-        form.setValue("frontImage", file);
-      } else {
-        form.setValue("backImage", file);
       }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setImagePreviews((prev) => ({
-          ...prev,
-          [photoType]: result,
-        }));
-      };
-      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error processing files:", error);
+      setUploadError("Failed to process image files");
     }
   };
 
@@ -258,55 +306,81 @@ export default function CardUpload({ user }: CardUploadProps) {
       setImagePreviews((prev) => ({ ...prev, damage: updatedDamagePreviews }));
     } else {
       if (photoType === "front") {
-        form.setValue("frontImage", undefined as File | undefined);
+        form.setValue("frontImage", undefined);
       } else {
-        form.setValue("backImage", undefined as File | undefined);
+        form.setValue("backImage", undefined);
       }
       setImagePreviews((prev) => ({ ...prev, [photoType]: null }));
     }
   };
 
   const onSubmit = async (data: CardFormData) => {
-    if (!user) return;
-
-    // Validate required images
-    if (!data.frontImage || !data.backImage) {
-      alert("Please upload both front and back images");
+    if (!user) {
+      setUploadError("User not authenticated");
       return;
     }
 
     setIsUploading(true);
+    setUploadError(null);
 
     try {
+      console.log("Starting card upload process...");
+
       // Upload images to Supabase Storage
-      const timestamp = Date.now();
-      const frontImagePath = `cards/${user.id}/${timestamp}-front-${data.frontImage.name}`;
-      const backImagePath = `cards/${user.id}/${timestamp}-back-${data.backImage.name}`;
+      let frontImageUrl: string | null = null;
+      let backImageUrl: string | null = null;
+      let damageImageUrls: string[] = [];
 
-      const [frontImageUrl, backImageUrl] = await Promise.all([
-        cardsService.uploadImage(data.frontImage, frontImagePath),
-        cardsService.uploadImage(data.backImage, backImagePath),
-      ]);
-
-      if (!frontImageUrl || !backImageUrl) {
-        throw new Error("Failed to upload images");
+      // Upload front image
+      if (data.frontImage) {
+        console.log("Uploading front image...");
+        const frontPath = `cards/${user.id}/${data.name.replace(
+          /[^a-zA-Z0-9]/g,
+          "_"
+        )}_front_${Date.now()}.${data.frontImage.name.split(".").pop()}`;
+        frontImageUrl = await cardsService.uploadImage(
+          data.frontImage,
+          frontPath
+        );
+        if (!frontImageUrl) {
+          throw new Error("Failed to upload front image");
+        }
+        console.log("Front image uploaded:", frontImageUrl);
       }
 
-      // Upload damage images if any
-      let damageImageUrls: string[] = [];
+      // Upload back image
+      if (data.backImage) {
+        console.log("Uploading back image...");
+        const backPath = `cards/${user.id}/${data.name.replace(
+          /[^a-zA-Z0-9]/g,
+          "_"
+        )}_back_${Date.now()}.${data.backImage.name.split(".").pop()}`;
+        backImageUrl = await cardsService.uploadImage(data.backImage, backPath);
+        if (!backImageUrl) {
+          throw new Error("Failed to upload back image");
+        }
+        console.log("Back image uploaded:", backImageUrl);
+      }
+
+      // Upload damage images
       if (data.damageImages && data.damageImages.length > 0) {
-        const damagePromises = data.damageImages.map((file, index) => {
-          const damagePath = `cards/${user.id}/${timestamp}-damage-${index}-${file.name}`;
-          return cardsService.uploadImage(file, damagePath);
+        console.log("Uploading damage images...");
+        const damagePromises = data.damageImages.map(async (file, index) => {
+          const damagePath = `cards/${user.id}/${data.name.replace(
+            /[^a-zA-Z0-9]/g,
+            "_"
+          )}_damage_${index}_${Date.now()}.${file.name.split(".").pop()}`;
+          return await cardsService.uploadImage(file, damagePath);
         });
 
         const damageResults = await Promise.all(damagePromises);
         damageImageUrls = damageResults.filter(
-          (url): url is string => url !== null
-        );
+          (url) => url !== null
+        ) as string[];
+        console.log("Damage images uploaded:", damageImageUrls);
       }
 
-      // Create card data for Supabase
+      // Create card data for database with image URLs
       const cardData = {
         name: data.name,
         type: data.type || "",
@@ -320,22 +394,34 @@ export default function CardUpload({ user }: CardUploadProps) {
         grade_company: data.gradeCompany || "",
         grade_score: data.gradeScore || "",
         for_sale: data.forSale,
-        front_image_url: frontImageUrl,
-        back_image_url: backImageUrl,
+        front_image_url: frontImageUrl || "",
+        back_image_url: backImageUrl || "",
         damage_images: damageImageUrls,
       };
+
+      console.log("Saving card to database...", cardData);
 
       // Save card to database
       await addCard(cardData);
 
-      // Reset form
+      console.log("Card uploaded successfully!");
+
+      // Reset form and state
       form.reset();
       setImagePreviews({ front: null, back: null, damage: [] });
+      setUploadError(null);
 
+      // Show success message
       alert("Card uploaded successfully!");
     } catch (error) {
       console.error("Error uploading card:", error);
-      alert("Failed to upload card. Please try again.");
+
+      // Set more specific error messages
+      if (error instanceof Error) {
+        setUploadError(`Upload failed: ${error.message}`);
+      } else {
+        setUploadError("Failed to upload card. Please try again.");
+      }
     } finally {
       setIsUploading(false);
     }
@@ -355,11 +441,15 @@ export default function CardUpload({ user }: CardUploadProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Error Display */}
+          {uploadError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{uploadError}</p>
+            </div>
+          )}
+
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit as any)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
                 <Label className="text-lg font-semibold">Card Photos</Label>
 
@@ -371,7 +461,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                   {imagePreviews.front ? (
                     <div className="relative inline-block">
                       <img
-                        src={imagePreviews.front || "/placeholder.svg"}
+                        src={imagePreviews.front}
                         alt="Card front preview"
                         className="w-48 h-64 object-cover rounded-lg border-2 border-blue-200"
                       />
@@ -418,7 +508,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                         or drag and drop your image
                       </p>
                       <p className="text-xs text-gray-500">
-                        PNG, JPEG, JPG, GIF, WebP, BMP, TIFF
+                        PNG, JPEG, JPG, GIF, WebP, BMP, TIFF (Max 10MB)
                       </p>
                     </div>
                   )}
@@ -432,7 +522,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                   {imagePreviews.back ? (
                     <div className="relative inline-block">
                       <img
-                        src={imagePreviews.back || "/placeholder.svg"}
+                        src={imagePreviews.back}
                         alt="Card back preview"
                         className="w-48 h-64 object-cover rounded-lg border-2 border-blue-200"
                       />
@@ -479,7 +569,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                         or drag and drop your image
                       </p>
                       <p className="text-xs text-gray-500">
-                        PNG, JPEG, JPG, GIF, WebP, BMP, TIFF
+                        PNG, JPEG, JPG, GIF, WebP, BMP, TIFF (Max 10MB)
                       </p>
                     </div>
                   )}
@@ -500,7 +590,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                       {imagePreviews.damage.map((preview, index) => (
                         <div key={index} className="relative">
                           <img
-                            src={preview || "/placeholder.svg"}
+                            src={preview}
                             alt={`Damage photo ${index + 1}`}
                             className="w-24 h-32 object-cover rounded border-2 border-red-200"
                           />
@@ -551,7 +641,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                       or drag and drop multiple images
                     </p>
                     <p className="text-xs text-gray-500">
-                      PNG, JPEG, JPG, GIF, WebP, BMP, TIFF
+                      PNG, JPEG, JPG, GIF, WebP, BMP, TIFF (Max 10MB each)
                     </p>
                   </div>
                 </div>
@@ -560,7 +650,7 @@ export default function CardUpload({ user }: CardUploadProps) {
               {/* Card Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -574,7 +664,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
@@ -587,7 +677,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                           placeholder="1"
                           {...field}
                           onChange={(e) =>
-                            field.onChange(Number.parseInt(e.target.value) || 1)
+                            field.onChange(parseInt(e.target.value) || 1)
                           }
                         />
                       </FormControl>
@@ -597,7 +687,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="type"
                   render={({ field }) => (
                     <FormItem>
@@ -625,7 +715,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="rarity"
                   render={({ field }) => (
                     <FormItem>
@@ -653,7 +743,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="condition"
                   render={({ field }) => (
                     <FormItem>
@@ -681,7 +771,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="set"
                   render={({ field }) => (
                     <FormItem>
@@ -695,7 +785,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="cardNumber"
                   render={({ field }) => (
                     <FormItem>
@@ -712,7 +802,7 @@ export default function CardUpload({ user }: CardUploadProps) {
               {/* Grading Section */}
               <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="isGraded"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -734,7 +824,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 {form.watch("isGraded") && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <FormField
-                      control={form.control as any}
+                      control={form.control}
                       name="gradeCompany"
                       render={({ field }) => (
                         <FormItem>
@@ -762,7 +852,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                     />
 
                     <FormField
-                      control={form.control as any}
+                      control={form.control}
                       name="gradeScore"
                       render={({ field }) => (
                         <FormItem>
@@ -784,7 +874,7 @@ export default function CardUpload({ user }: CardUploadProps) {
               {/* Selling Interest Section */}
               <div className="space-y-2 p-4 bg-green-50 rounded-lg">
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="forSale"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -809,7 +899,7 @@ export default function CardUpload({ user }: CardUploadProps) {
               </div>
 
               <FormField
-                control={form.control as any}
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -831,8 +921,8 @@ export default function CardUpload({ user }: CardUploadProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={
                   !form.watch("name") ||
-                  !imagePreviews.front ||
-                  !imagePreviews.back ||
+                  !form.watch("frontImage") ||
+                  !form.watch("backImage") ||
                   isUploading
                 }
               >
@@ -844,7 +934,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                 ) : (
                   <>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add to Collection
+                    Upload Card
                   </>
                 )}
               </Button>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 import { LogOut, Grid3X3, Target, Share2, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { ProfileTab } from "@/components/profile-tab";
 import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
@@ -17,10 +18,17 @@ interface DashboardClientProps {
 
 export function DashboardClient({ user }: DashboardClientProps) {
   const [copied, setCopied] = useState(false);
+  const { logout: authLogout } = useAuth();
 
   const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      await authLogout();
+      // The authLogout function will handle the redirect
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Force redirect to login page if logout fails
+      window.location.href = "/login";
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -34,17 +42,39 @@ export function DashboardClient({ user }: DashboardClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div
+      className="min-h-screen bg-gradient-to-br from-aqua-mint-50 to-mystic-vault-50"
+      style={{
+        background:
+          "linear-gradient(to bottom right, var(--aqua-mint-50), var(--mystic-vault-50))",
+      }}
+    >
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur border-b border-blue-200 sticky top-0 z-50">
+      <header
+        className="bg-white/90 backdrop-blur border-b sticky top-0 z-50"
+        style={{ borderColor: "var(--aqua-mint-200)" }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-blue-900">Dashboard</h1>
+              <h1
+                className="text-2xl font-bold"
+                style={{ color: "var(--mystic-vault-800)" }}
+              >
+                Kortly Dashboard
+              </h1>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-green-700 font-medium">
-                  {user.user_metadata?.username || user.email}
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: "var(--aqua-mint-500)" }}
+                ></div>
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: "var(--aqua-mint-700)" }}
+                >
+                  {user.user_metadata?.given_name ||
+                    user.user_metadata?.display_name ||
+                    user.email}
                 </span>
               </div>
             </div>
@@ -55,7 +85,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 className="flex items-center gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                Logg ut
               </Button>
             </div>
           </div>
@@ -67,9 +97,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* User Info Card */}
         <Card className="mb-8 bg-white/90 backdrop-blur border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl text-blue-900 flex items-center gap-2">
+            <CardTitle
+              className="text-xl flex items-center gap-2"
+              style={{ color: "var(--mystic-vault-800)" }}
+            >
               <Target className="h-5 w-5" />
-              Welcome back!
+              Velkommen tilbake!
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -77,33 +110,33 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">
-                    User Details
+                    Brukerdetaljer
                   </h3>
                   <div className="space-y-1 text-sm">
                     <p>
                       <span className="font-medium">Email:</span> {user.email}
                     </p>
                     <p>
-                      <span className="font-medium">User ID:</span> {user.id}
+                      <span className="font-medium">Bruker ID:</span> {user.id}
                     </p>
                     <p>
-                      <span className="font-medium">Created:</span>{" "}
+                      <span className="font-medium">Opprettet:</span>{" "}
                       {new Date(user.created_at).toISOString().split("T")[0]}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">
-                    Session Info
-                  </h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">Økt Info</h3>
                   <div className="space-y-1 text-sm">
                     <p>
                       <span className="font-medium">Status:</span>{" "}
-                      <span className="text-green-600">Active</span>
+                      <span style={{ color: "var(--aqua-mint-600)" }}>
+                        Aktiv
+                      </span>
                     </p>
                     <p>
-                      <span className="font-medium">Provider:</span>{" "}
-                      {user.app_metadata?.provider || "Unknown"}
+                      <span className="font-medium">Leverandør:</span>{" "}
+                      {user.app_metadata?.provider || "Ukjent"}
                     </p>
                   </div>
                 </div>
@@ -112,7 +145,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               {/* User JSON Data */}
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-700">Raw User Data</h3>
+                  <h3 className="font-semibold text-gray-700">Rå Brukerdata</h3>
                   <Button
                     onClick={() =>
                       copyToClipboard(JSON.stringify(user, null, 2))
@@ -124,12 +157,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
                     {copied ? (
                       <>
                         <Check className="h-4 w-4" />
-                        Copied!
+                        Kopiert!
                       </>
                     ) : (
                       <>
                         <Copy className="h-4 w-4" />
-                        Copy
+                        Kopier
                       </>
                     )}
                   </Button>
@@ -145,18 +178,21 @@ export function DashboardClient({ user }: DashboardClientProps) {
         </Card>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-white/50">
+          <TabsList
+            className="grid w-full grid-cols-4 mb-8"
+            style={{ backgroundColor: "var(--holo-gloss)", opacity: 0.9 }}
+          >
             <TabsTrigger value="profile" className="gap-2">
               <Target className="h-4 w-4" />
-              Profile
+              Profil
             </TabsTrigger>
             <TabsTrigger value="uploads" className="gap-2">
               <Grid3X3 className="h-4 w-4" />
-              Card Uploads
+              Kortopplastinger
             </TabsTrigger>
             <TabsTrigger value="collection" className="gap-2">
               <Grid3X3 className="h-4 w-4" />
-              Collection
+              Samling
             </TabsTrigger>
             <TabsTrigger value="test" className="gap-2">
               <Target className="h-4 w-4" />

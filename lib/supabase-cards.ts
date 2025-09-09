@@ -1,238 +1,248 @@
+// lib/supabase-cards.ts
 import { createClient } from "@/utils/supabase/client";
 
-export interface Card {
-  id: string;
-  owner_id: string;
+export interface CardData {
   name: string;
-  type?: string;
-  rarity?: string;
-  set_name?: string;
-  card_number?: string;
-  condition?: string;
-  description?: string;
+  type: string;
+  rarity: string;
+  set_name: string;
+  card_number: string;
+  condition: string;
+  description: string;
   quantity: number;
   is_graded: boolean;
-  grade_company?: string;
-  grade_score?: string;
+  grade_company: string;
+  grade_score: string;
   for_sale: boolean;
-  front_image_url?: string;
-  back_image_url?: string;
+  price?: number;
+  front_image_url: string;
+  back_image_url: string;
   damage_images: string[];
-  created_at: string;
-  updated_at: string;
+  user_id?: string; // Optional for backward compatibility
 }
 
-export interface Profile {
+export interface Card extends CardData {
   id: string;
-  username: string;
-  display_name?: string;
-  email?: string;
-  avatar_url?: string;
-  bio?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
-export interface CardInsert {
-  owner_id: string;
-  name: string;
-  type?: string;
-  rarity?: string;
-  set_name?: string;
-  card_number?: string;
-  condition?: string;
-  description?: string;
-  quantity: number;
-  is_graded: boolean;
-  grade_company?: string;
-  grade_score?: string;
-  for_sale: boolean;
-  front_image_url?: string;
-  back_image_url?: string;
-  damage_images: string[];
-}
-
-export class CardsService {
+class CardsService {
   private supabase = createClient();
 
+  /**
+   * Upload an image file to Supabase Storage
+   * @param file - The file to upload
+   * @param path - The storage path for the file
+   * @returns The public URL of the uploaded file or null if failed
+   */
   async uploadImage(file: File, path: string): Promise<string | null> {
     try {
-      console.log("Uploading image to path:", path);
+      console.log(`Uploading image to path: ${path}`);
 
+      // Upload file to Supabase Storage
       const { data, error } = await this.supabase.storage
         .from("card-images")
-        .upload(path, file);
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: false, // Don't overwrite existing files
+        });
 
       if (error) {
         console.error("Error uploading image:", error);
-        console.error("Error details:", {
-          message: error.message,
-          statusCode: error.statusCode,
-          error: error.error,
-        });
-        return null;
+
+        // If file already exists, try with a different name
+        if (error.message.includes("already exists")) {
+          const timestamp = Date.now();
+          const newPath = path.replace(/(\.[^.]+)$/, `-${timestamp}$1`);
+          return this.uploadImage(file, newPath);
+        }
+
+        throw error;
       }
 
-      console.log("Upload successful:", data);
+      console.log("Image uploaded successfully:", data);
 
-      const {
-        data: { publicUrl },
-      } = this.supabase.storage.from("card-images").getPublicUrl(data.path);
+      // Get the public URL
+      const { data: publicUrlData } = this.supabase.storage
+        .from("card-images")
+        .getPublicUrl(data.path);
 
+      const publicUrl = publicUrlData.publicUrl;
       console.log("Public URL generated:", publicUrl);
+
       return publicUrl;
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Failed to upload image:", error);
       return null;
     }
   }
 
-  async createCard(cardData: CardInsert): Promise<Card | null> {
+  /**
+   * Create a new card record in the database
+   * @param cardData - The card data to insert
+   * @returns The created card record or throws an error
+   */
+  async createCard(cardData: CardData & { user_id: string }): Promise<any> {
     try {
+      console.log("Creating card record:", cardData);
+
+      // First, let's check what columns exist in the table
+      const { data: tableInfo, error: tableError } = await this.supabase
+        .from("cards")
+        .select("*")
+        .limit(1);
+
+      if (tableError) {
+        console.log("Table info error:", tableError);
+      } else {
+        console.log("Table structure sample:", tableInfo);
+      }
+
+      // Start with just the basic required fields
+      const insertData: any = {
+        user_id: cardData.user_id,
+        name: cardData.name,
+        quantity: cardData.quantity,
+        is_graded: cardData.is_graded,
+        for_sale: cardData.for_sale,
+      };
+
+      // Add optional fields only if they have values
+      if (cardData.type) insertData.type = cardData.type;
+      if (cardData.rarity) insertData.rarity = cardData.rarity;
+      if (cardData.set_name) insertData.set_name = cardData.set_name;
+      if (cardData.card_number) insertData.card_number = cardData.card_number;
+      if (cardData.condition) insertData.condition = cardData.condition;
+      if (cardData.description) insertData.description = cardData.description;
+      if (cardData.grade_company)
+        insertData.grade_compa = cardData.grade_company;
+      if (cardData.grade_score) insertData.grade_score = cardData.grade_score;
+      // Add image URLs - only use columns that exist
+      if (cardData.front_image_url) {
+        insertData.front_image_url = cardData.front_image_url;
+      }
+      if (cardData.back_image_url) {
+        insertData.back_image_url = cardData.back_image_url;
+      }
+      if (cardData.damage_images && cardData.damage_images.length > 0) {
+        insertData.damage_images = cardData.damage_images;
+      }
+
       const { data, error } = await this.supabase
         .from("cards")
-        .insert(cardData)
+        .insert([insertData])
         .select()
         .single();
 
       if (error) {
         console.error("Error creating card:", error);
-        return null;
+        throw error;
       }
 
+      console.log("Card created successfully:", data);
       return data;
     } catch (error) {
-      console.error("Error creating card:", error);
-      return null;
+      console.error("Failed to create card:", error);
+      throw error;
     }
   }
 
-  async getCards(ownerId?: string): Promise<Card[]> {
+  /**
+   * Get all cards for a specific user
+   * @param userId - The user ID
+   * @returns Array of card records
+   */
+  async getUserCards(userId: string): Promise<any[]> {
     try {
-      let query = this.supabase
+      console.log("Fetching cards for user:", userId);
+
+      const { data, error } = await this.supabase
         .from("cards")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      if (ownerId) {
-        query = query.eq("owner_id", ownerId);
-      }
-
-      const { data, error } = await query;
-
       if (error) {
-        console.error("Error fetching cards:", error);
-        return [];
+        console.error("Error fetching user cards:", error);
+        throw error;
       }
 
-      return data || [];
+      // Process the data to ensure image URLs are properly formatted
+      const processedCards = (data || []).map((card) => ({
+        ...card,
+        // Use standard column names
+        front_image_url: card.front_image_url || "",
+        back_image_url: card.back_image_url || "",
+        damage_images: card.damage_images || [],
+      }));
+
+      console.log(
+        "Cards fetched successfully:",
+        processedCards.length,
+        "cards"
+      );
+      return processedCards;
     } catch (error) {
-      console.error("Error fetching cards:", error);
+      console.error("Failed to fetch user cards:", error);
       return [];
     }
   }
 
-  async getCard(id: string): Promise<Card | null> {
+  /**
+   * Delete an image from Supabase Storage
+   * @param path - The storage path of the image to delete
+   */
+  async deleteImage(path: string): Promise<void> {
     try {
-      const { data, error } = await this.supabase
+      // Extract the file path from the full URL if needed
+      const filePath = path.includes("/storage/v1/object/public/card-images/")
+        ? path.split("/storage/v1/object/public/card-images/")[1]
+        : path;
+
+      const { error } = await this.supabase.storage
+        .from("card-images")
+        .remove([filePath]);
+
+      if (error) {
+        console.error("Error deleting image:", error);
+        throw error;
+      }
+
+      console.log("Image deleted successfully:", filePath);
+    } catch (error) {
+      console.error("Failed to delete image:", error);
+      // Don't throw here, as this is often called during cleanup
+    }
+  }
+
+  /**
+   * Delete a card and its associated images
+   * @param cardId - The card ID to delete
+   * @param imageUrls - Array of image URLs to delete
+   */
+  async deleteCard(cardId: string, imageUrls: string[] = []): Promise<void> {
+    try {
+      // Delete the card record first
+      const { error: deleteError } = await this.supabase
         .from("cards")
-        .select("*")
-        .eq("id", id)
-        .single();
+        .delete()
+        .eq("id", cardId);
 
-      if (error) {
-        console.error("Error fetching card:", error);
-        return null;
+      if (deleteError) {
+        console.error("Error deleting card:", deleteError);
+        throw deleteError;
       }
 
-      return data;
-    } catch (error) {
-      console.error("Error fetching card:", error);
-      return null;
-    }
-  }
-
-  async updateCard(
-    id: string,
-    updates: Partial<CardInsert>
-  ): Promise<Card | null> {
-    try {
-      const { data, error } = await this.supabase
-        .from("cards")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating card:", error);
-        return null;
+      // Delete associated images
+      if (imageUrls.length > 0) {
+        await Promise.all(imageUrls.map((url) => this.deleteImage(url)));
       }
 
-      return data;
+      console.log("Card and images deleted successfully");
     } catch (error) {
-      console.error("Error updating card:", error);
-      return null;
-    }
-  }
-
-  async deleteCard(id: string): Promise<boolean> {
-    try {
-      const { error } = await this.supabase.from("cards").delete().eq("id", id);
-
-      if (error) {
-        console.error("Error deleting card:", error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error deleting card:", error);
-      return false;
-    }
-  }
-
-  async getProfile(userId: string): Promise<Profile | null> {
-    try {
-      const { data, error } = await this.supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      return null;
-    }
-  }
-
-  async updateProfile(
-    userId: string,
-    updates: Partial<Profile>
-  ): Promise<Profile | null> {
-    try {
-      const { data, error } = await this.supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", userId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating profile:", error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      return null;
+      console.error("Failed to delete card:", error);
+      throw error;
     }
   }
 }

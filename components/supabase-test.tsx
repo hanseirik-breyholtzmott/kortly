@@ -48,7 +48,7 @@ export function SupabaseTest({ user }: SupabaseTestProps) {
 
       // Test 2: Database access
       console.log("Testing database access...");
-      const cards = await cardsService.getCards();
+      const cards = await cardsService.getUserCards(user?.id || "test");
       setTestResults((prev) => ({ ...prev, database: true }));
       console.log("✅ Database test passed");
 
@@ -145,7 +145,7 @@ export function SupabaseTest({ user }: SupabaseTestProps) {
           if (frontImageUrl && backImageUrl) {
             // Create test card
             const testCard = await cardsService.createCard({
-              owner_id: user.id,
+              user_id: user.id,
               name: testCardName,
               type: "Fire",
               rarity: "Common",
@@ -156,6 +156,8 @@ export function SupabaseTest({ user }: SupabaseTestProps) {
                 "This is a test card created to verify the upload functionality.",
               quantity: 1,
               is_graded: false,
+              grade_company: "",
+              grade_score: "",
               for_sale: false,
               front_image_url: frontImageUrl,
               back_image_url: backImageUrl,

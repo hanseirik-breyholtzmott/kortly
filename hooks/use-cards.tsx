@@ -1,109 +1,156 @@
-"use client";
-
+// hooks/use-cards.ts
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { cardsService, Card, CardInsert } from "@/lib/supabase-cards";
+import { cardsService, type CardData } from "@/lib/supabase-cards";
+
+interface Card extends CardData {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at?: string;
+}
 
 interface UseCardsProps {
   user?: any;
 }
 
-export function useCards({ user }: UseCardsProps = {}) {
+interface UseCardsReturn {
+  cards: Card[];
+  loading: boolean;
+  error: string | null;
+  addCard: (cardData: CardData) => Promise<void>;
+  deleteCard: (cardId: string) => Promise<void>;
+  refreshCards: () => Promise<void>;
+}
+
+export function useCards({ user }: UseCardsProps = {}): UseCardsReturn {
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
   const fetchCards = async () => {
-    if (!user) {
-      setCards([]);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
-      const userCards = await cardsService.getCards(user.id);
+
+      if (!user) {
+        console.log("No user provided to useCards hook");
+        setCards([]);
+        return;
+      }
+
+      // Fetch user's cards from database
+      const userCards = await cardsService.getUserCards(user.id);
       setCards(userCards);
     } catch (err) {
-      setError("Failed to fetch cards");
       console.error("Error fetching cards:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch cards");
     } finally {
       setLoading(false);
     }
   };
 
-  const addCard = async (cardData: Omit<CardInsert, "owner_id">) => {
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
+  const addCard = async (cardData: CardData) => {
     try {
-      const newCard = await cardsService.createCard({
+      setError(null);
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Add user_id to card data
+      const cardWithUserId = {
         ...cardData,
-        owner_id: user.id,
-      });
+        user_id: user.id,
+      };
 
-      if (newCard) {
-        setCards((prev) => [newCard, ...prev]);
-        return newCard;
-      } else {
-        throw new Error("Failed to create card");
-      }
+      // Create the card in database
+      const newCard = await cardsService.createCard(cardWithUserId);
+
+      // Add to local state
+      setCards((prev) => [newCard, ...prev]);
     } catch (err) {
-      setError("Failed to add card");
       console.error("Error adding card:", err);
-      throw err;
+      setError(err instanceof Error ? err.message : "Failed to add card");
+      throw err; // Re-throw to handle in component
     }
   };
 
-  const updateCard = async (id: string, updates: Partial<CardInsert>) => {
+  const deleteCard = async (cardId: string) => {
     try {
-      const updatedCard = await cardsService.updateCard(id, updates);
+      setError(null);
 
-      if (updatedCard) {
-        setCards((prev) =>
-          prev.map((card) => (card.id === id ? updatedCard : card))
-        );
-        return updatedCard;
-      } else {
-        throw new Error("Failed to update card");
-      }
+      // Delete from database
+      await cardsService.deleteCard(cardId);
+
+      // Remove from local state
+      setCards((prev) => prev.filter((card) => card.id !== cardId));
     } catch (err) {
-      setError("Failed to update card");
-      console.error("Error updating card:", err);
-      throw err;
-    }
-  };
-
-  const deleteCard = async (id: string) => {
-    try {
-      const success = await cardsService.deleteCard(id);
-
-      if (success) {
-        setCards((prev) => prev.filter((card) => card.id !== id));
-        return true;
-      } else {
-        throw new Error("Failed to delete card");
-      }
-    } catch (err) {
-      setError("Failed to delete card");
       console.error("Error deleting card:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete card");
       throw err;
     }
   };
 
+  const refreshCards = async () => {
+    await fetchCards();
+  };
+
+  // Fetch cards when user changes
   useEffect(() => {
-    fetchCards();
+    if (user) {
+      fetchCards();
+    } else {
+      setCards([]);
+      setLoading(false);
+    }
   }, [user]);
+
+  // Set up real-time subscription for cards
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("cards-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cards",
+        },
+        (payload) => {
+          console.log("Real-time card change:", payload);
+
+          if (payload.eventType === "INSERT") {
+            setCards((prev) => [payload.new as Card, ...prev]);
+          } else if (payload.eventType === "DELETE") {
+            setCards((prev) =>
+              prev.filter((card) => card.id !== payload.old.id)
+            );
+          } else if (payload.eventType === "UPDATE") {
+            setCards((prev) =>
+              prev.map((card) =>
+                card.id === payload.new.id ? (payload.new as Card) : card
+              )
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return {
     cards,
     loading,
     error,
     addCard,
-    updateCard,
     deleteCard,
-    refetch: fetchCards,
+    refreshCards,
   };
 }

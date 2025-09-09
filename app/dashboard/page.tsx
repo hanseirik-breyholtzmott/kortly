@@ -5,7 +5,7 @@ import { DashboardClient } from "./dashboard-client";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  // Get the current user from server-side
+  // Use getUser() for secure authentication (as recommended by Supabase)
   const {
     data: { user },
     error,

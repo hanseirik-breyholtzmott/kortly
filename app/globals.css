@@ -28,6 +28,51 @@
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
   --radius: 0.5rem;
+
+  /* Custom color palette */
+  --holo-gloss: #ffffff;
+
+  /* Aqua Mint (Teal/Cyan) shades */
+  --aqua-mint-50: #edfafa;
+  --aqua-mint-100: #def5f6;
+  --aqua-mint-200: #bfeced;
+  --aqua-mint-300: #8fdee0;
+  --aqua-mint-400: #52ccce;
+  --aqua-mint-500: #00b4b8;
+  --aqua-mint-600: #00abae;
+  --aqua-mint-700: #00979a;
+  --aqua-mint-800: #008185;
+  --aqua-mint-900: #006a6d;
+  --aqua-mint-950: #004647;
+  --aqua-mint: #00b4b8; /* Main aqua mint color */
+
+  /* Spark Token (Orange) shades */
+  --spark-token-50: #fff9ed;
+  --spark-token-100: #fff4de;
+  --spark-token-200: #ffebbf;
+  --spark-token-300: #ffdb8f;
+  --spark-token-400: #ffc852;
+  --spark-token-500: #ffae00;
+  --spark-token-600: #f2a500;
+  --spark-token-700: #db9600;
+  --spark-token-800: #b87d00;
+  --spark-token-900: #966700;
+  --spark-token-950: #634400;
+  --spark-token: #ffae00; /* Main spark token color */
+
+  /* Mystic Vault (Dark Blue/Purple) shades */
+  --mystic-vault-50: #f1f1fa;
+  --mystic-vault-100: #e6e5f6;
+  --mystic-vault-200: #ceccee;
+  --mystic-vault-300: #aaa6e0;
+  --mystic-vault-400: #7b76cf;
+  --mystic-vault-500: #3d35b9;
+  --mystic-vault-600: #3a32b0;
+  --mystic-vault-700: #342e9f;
+  --mystic-vault-800: #2c2685;
+  --mystic-vault-900: #241f6d;
+  --mystic-vault-950: #181548;
+  --mystic-vault: #3d35b9; /* Main mystic vault color */
 }
 
 @media (prefers-color-scheme: dark) {

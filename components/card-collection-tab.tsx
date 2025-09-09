@@ -62,52 +62,102 @@ export function CardCollectionTab({ user }: CardCollectionTabProps) {
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
-      <h2 className="text-xl font-semibold mb-4">My Collection</h2>
+      <h2 className="text-xl font-semibold mb-4">Min Samling</h2>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+        <Card
+          className="border-0 shadow-lg"
+          style={{
+            background:
+              "linear-gradient(to right, var(--aqua-mint-50), var(--aqua-mint-100))",
+            borderColor: "var(--aqua-mint-200)",
+          }}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600">Total Cards</p>
-                <p className="text-3xl font-bold text-blue-700">
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: "var(--aqua-mint-600)" }}
+                >
+                  Totalt Kort
+                </p>
+                <p
+                  className="text-3xl font-bold"
+                  style={{ color: "var(--aqua-mint-700)" }}
+                >
                   {stats.totalCards}
                 </p>
               </div>
-              <Grid3X3 className="h-8 w-8 text-blue-600" />
+              <Grid3X3
+                className="h-8 w-8"
+                style={{ color: "var(--aqua-mint-600)" }}
+              />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+        <Card
+          className="border-0 shadow-lg"
+          style={{
+            background:
+              "linear-gradient(to right, var(--mystic-vault-50), var(--mystic-vault-100))",
+            borderColor: "var(--mystic-vault-200)",
+          }}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-600">
-                  Rare Cards
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: "var(--mystic-vault-600)" }}
+                >
+                  Sjeldne Kort
                 </p>
-                <p className="text-3xl font-bold text-purple-700">
+                <p
+                  className="text-3xl font-bold"
+                  style={{ color: "var(--mystic-vault-700)" }}
+                >
                   {stats.rareCards}
                 </p>
               </div>
-              <Star className="h-8 w-8 text-purple-600" />
+              <Star
+                className="h-8 w-8"
+                style={{ color: "var(--mystic-vault-600)" }}
+              />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+        <Card
+          className="border-0 shadow-lg"
+          style={{
+            background:
+              "linear-gradient(to right, var(--spark-token-50), var(--spark-token-100))",
+            borderColor: "var(--spark-token-200)",
+          }}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600">
-                  Collection Value
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: "var(--spark-token-600)" }}
+                >
+                  Samlingsverdi
                 </p>
-                <p className="text-3xl font-bold text-green-700">
-                  ${stats.value}
+                <p
+                  className="text-3xl font-bold"
+                  style={{ color: "var(--spark-token-700)" }}
+                >
+                  Kommer snart
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
+              <DollarSign
+                className="h-8 w-8"
+                style={{ color: "var(--spark-token-600)" }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -120,56 +170,61 @@ export function CardCollectionTab({ user }: CardCollectionTabProps) {
           className="cursor-pointer hover:bg-gray-200"
           onClick={() => setFilter("all")}
         >
-          All Cards
+          Alle Kort
         </Badge>
         <Badge
           variant={filter === "rare" ? "secondary" : "outline"}
           className="cursor-pointer hover:bg-gray-100"
           onClick={() => setFilter("rare")}
         >
-          Rare
+          Sjeldne
         </Badge>
         <Badge
           variant={filter === "common" ? "secondary" : "outline"}
           className="cursor-pointer hover:bg-gray-100"
           onClick={() => setFilter("common")}
         >
-          Common
+          Vanlige
         </Badge>
         <Badge
           variant={filter === "recent" ? "secondary" : "outline"}
           className="cursor-pointer hover:bg-gray-100"
           onClick={() => setFilter("recent")}
         >
-          Recent
+          Nylige
         </Badge>
       </div>
 
       {/* Collection Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Your Cards</h3>
+          <h3 className="text-lg font-medium">Dine Kort</h3>
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-yellow-500" />
             <span className="text-sm text-gray-600">
-              Collection Level: Beginner
+              Samlingsnivå: Nybegynner
             </span>
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Loading cards...</span>
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2"
+              style={{ borderColor: "var(--aqua-mint-600)" }}
+            ></div>
+            <span className="ml-2 text-gray-600">Laster kort...</span>
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-600 mb-4">Error loading cards: {error}</p>
+            <p className="text-red-600 mb-4">
+              Feil ved lasting av kort: {error}
+            </p>
             <button
               onClick={() => window.location.reload()}
               className="text-blue-600 hover:text-blue-700"
             >
-              Try again
+              Prøv igjen
             </button>
           </div>
         ) : filteredCards.length === 0 ? (
@@ -177,13 +232,13 @@ export function CardCollectionTab({ user }: CardCollectionTabProps) {
             <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-500">
               {filter === "all"
-                ? "No cards in collection"
-                : `No ${filter} cards found`}
+                ? "Ingen kort i samlingen"
+                : `Ingen ${filter} kort funnet`}
             </p>
             <p className="text-sm text-gray-400 mt-1">
               {filter === "all"
-                ? "Start uploading cards to build your collection"
-                : "Try a different filter or upload some cards"}
+                ? "Start å laste opp kort for å bygge samlingen din"
+                : "Prøv et annet filter eller last opp noen kort"}
             </p>
           </div>
         ) : (
