@@ -1,7 +1,17 @@
 "use client";
 
 interface ProfileTabProps {
-  user?: any;
+  user?: {
+    id: string;
+    email?: string;
+    created_at: string;
+    role?: string;
+    user_metadata?: {
+      username?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
 }
 
 export function ProfileTab({ user }: ProfileTabProps) {

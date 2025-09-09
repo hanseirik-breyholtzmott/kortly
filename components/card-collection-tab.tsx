@@ -2,14 +2,17 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Grid3X3, Star, DollarSign, Trophy, Plus } from "lucide-react";
+import { Grid3X3, Star, DollarSign, Trophy } from "lucide-react";
 import { useCards } from "@/hooks/use-cards";
 import { CardDisplay } from "@/components/card-display";
-import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { useState } from "react";
 
 interface CardCollectionTabProps {
-  user?: any;
+  user?: {
+    id: string;
+    email?: string;
+    [key: string]: unknown;
+  };
 }
 
 export function CardCollectionTab({ user }: CardCollectionTabProps) {

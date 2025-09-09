@@ -14,16 +14,16 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePokemonCards } from "@/hooks/use-pokemon-cards";
 import { Trophy, Medal, Award, Crown, Star, Calendar } from "lucide-react";
 
-interface LeaderboardUser {
-  id: string;
-  username: string;
-  email: string;
-  totalCards: number;
-  uniquePokemon: number;
-  rareCards: number;
-  joinedAt: string;
-  rank: number;
-}
+// interface LeaderboardUser {
+//   id: string;
+//   username: string;
+//   email: string;
+//   totalCards: number;
+//   uniquePokemon: number;
+//   rareCards: number;
+//   joinedAt: string;
+//   rank: number;
+// }
 
 export default function Leaderboard() {
   const { user } = useAuth();
@@ -102,7 +102,7 @@ export default function Leaderboard() {
     });
 
     return userStats;
-  }, [getAllCards]);
+  }, [getAllCards, allUsers]);
 
   const currentUserRank = leaderboardData.find((u) => u.id === user?.id);
 
@@ -170,7 +170,7 @@ export default function Leaderboard() {
             Trainer Leaderboard
           </CardTitle>
           <CardDescription className="text-lg text-gray-700">
-            See who's closest to becoming the ultimate Pokemon Master!
+            See who&apos;s closest to becoming the ultimate Pokemon Master!
           </CardDescription>
         </CardHeader>
       </Card>
@@ -203,7 +203,7 @@ export default function Leaderboard() {
 
       {/* Top 3 Podium */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {leaderboardData.slice(0, 3).map((trainer, index) => {
+        {leaderboardData.slice(0, 3).map((trainer) => {
           const isCurrentUser = trainer.id === user?.id;
           return (
             <Card

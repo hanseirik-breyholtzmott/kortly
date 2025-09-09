@@ -3,7 +3,11 @@
 import CardUpload from "@/components/card-upload";
 
 interface CardUploadsTabProps {
-  user?: any;
+  user?: {
+    id: string;
+    email?: string;
+    [key: string]: unknown;
+  };
 }
 
 export function CardUploadsTab({ user }: CardUploadsTabProps) {

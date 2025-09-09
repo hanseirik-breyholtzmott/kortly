@@ -16,7 +16,7 @@ export default function LogoutPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [, setUser] = useState<unknown>(null);
   const router = useRouter();
 
   useEffect(() => {

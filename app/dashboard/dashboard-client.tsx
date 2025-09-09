@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { ProfileTab } from "@/components/profile-tab";
 import { CardUploadsTab } from "@/components/card-uploads-tab";
 import { CardCollectionTab } from "@/components/card-collection-tab";
-import { SupabaseTest } from "@/components/supabase-test";
 
 interface User {
   id: string;
@@ -256,9 +255,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
             <CardCollectionTab user={user} />
           </TabsContent>
 
-          <TabsContent value="test">
-            <SupabaseTest user={user} />
-          </TabsContent>
+         
         </Tabs>
       </main>
     </div>

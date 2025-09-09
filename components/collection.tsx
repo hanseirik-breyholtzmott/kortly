@@ -159,7 +159,17 @@ export default function Collection() {
     });
   }, [userCards, searchTerm, filterType, filterRarity]);
 
-  const getCardPhotos = (card: any) => {
+  const getCardPhotos = (card: {
+    id: string;
+    name: string;
+    photos?: {
+      front?: string;
+      back?: string;
+      damage?: string[];
+    };
+    imageUrl?: string;
+    [key: string]: unknown;
+  }) => {
     const photos = [];
 
     if (card.photos?.front) {

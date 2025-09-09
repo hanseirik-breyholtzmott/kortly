@@ -33,7 +33,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { createClient } from "@/utils/supabase/client";
+// import { createClient } from "@/utils/supabase/client";
 import { useCards } from "@/hooks/use-cards";
 import { cardsService } from "@/lib/supabase-cards";
 import { Upload, X, Plus, Camera } from "lucide-react";
@@ -130,7 +130,11 @@ type CardFormData = z.infer<typeof cardFormSchema>;
 type PhotoType = "front" | "back" | "damage";
 
 interface CardUploadProps {
-  user?: any;
+  user?: {
+    id: string;
+    email?: string;
+    [key: string]: unknown;
+  };
 }
 
 interface ImagePreviews {
@@ -217,7 +221,7 @@ export default function CardUpload({ user }: CardUploadProps) {
         form.setValue("damageImages", updatedDamageImages);
 
         // Create previews for damage images
-        const newPreviews: string[] = [];
+        // const newPreviews: string[] = [];
         const previewPromises = validFiles.map((file) => {
           return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -889,7 +893,7 @@ export default function CardUpload({ user }: CardUploadProps) {
                           I might be interested in selling this card
                         </FormLabel>
                         <FormDescription className="text-sm text-gray-600">
-                          This will add a "For Sale" badge to help other
+                          This will add a &quot;For Sale&quot; badge to help other
                           collectors find cards they might want to purchase.
                         </FormDescription>
                       </div>

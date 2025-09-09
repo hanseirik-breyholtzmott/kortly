@@ -40,6 +40,17 @@ export default function ProgressTracker() {
   const userCards = user ? getUserCards(user.id) : []
 
   const progressStats = useMemo(() => {
+    if (!userCards) return {
+      uniquePokemon: 0,
+      totalCards: 0,
+      typesCollected: 0,
+      raritiesCollected: 0,
+      holoCards: 0,
+      completionPercentage: 0,
+      typeCompletionPercentage: 0,
+      rarityCompletionPercentage: 0,
+    };
+    
     const uniqueNames = new Set(userCards.map((card) => card.name.toLowerCase()))
     const typesCaught = new Set(userCards.map((card) => card.type).filter(Boolean))
     const raritiesCollected = new Set(userCards.map((card) => card.rarity).filter(Boolean))
@@ -190,7 +201,7 @@ export default function ProgressTracker() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-blue-900 flex items-center justify-center gap-3">
             <Target className="h-8 w-8" />
-            Gotta Catch 'Em All!
+            Gotta Catch &apos;Em All!
           </CardTitle>
           <CardDescription className="text-lg text-blue-700">Your journey to complete the Pokedex</CardDescription>
         </CardHeader>

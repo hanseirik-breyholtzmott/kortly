@@ -83,7 +83,7 @@ class CardsService {
    * @param cardData - The card data to insert
    * @returns The created card record or throws an error
    */
-  async createCard(cardData: CardData & { user_id: string }): Promise<any> {
+  async createCard(cardData: CardData & { user_id: string }): Promise<Card> {
     try {
       console.log("Creating card record:", cardData);
 
@@ -100,7 +100,7 @@ class CardsService {
       }
 
       // Start with just the basic required fields
-      const insertData: any = {
+      const insertData: Partial<CardData> & { user_id: string } = {
         user_id: cardData.user_id,
         name: cardData.name,
         quantity: cardData.quantity,
@@ -153,7 +153,7 @@ class CardsService {
    * @param userId - The user ID
    * @returns Array of card records
    */
-  async getUserCards(userId: string): Promise<any[]> {
+  async getUserCards(userId: string): Promise<Card[]> {
     try {
       console.log("Fetching cards for user:", userId);
 
