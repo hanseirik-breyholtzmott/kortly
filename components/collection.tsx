@@ -59,6 +59,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "The iconic fire-type Pokemon",
+      imageUrl: "/charizard-pokemon-card.png",
     },
     {
       id: "dummy-2",
@@ -74,6 +75,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "Everyone's favorite electric mouse",
+      imageUrl: "/pikachu-pokemon-card.jpg",
     },
     {
       id: "dummy-3",
@@ -91,6 +93,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "Powerful water-type with hydro cannons",
+      imageUrl: "/blastoise-pokemon-card.png",
     },
     {
       id: "dummy-4",
@@ -106,6 +109,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "Grass-type starter evolution",
+      imageUrl: "/venusaur-pokemon-card.png",
     },
     {
       id: "dummy-5",
@@ -121,6 +125,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "Psychic-type with incredible intelligence",
+      imageUrl: "/alakazam-pokemon-card.png",
     },
     {
       id: "dummy-6",
@@ -138,6 +143,7 @@ export default function Collection() {
       uploadedAt: new Date().toISOString(),
       uploadedBy: user?.id || "demo",
       description: "Fighting-type with four powerful arms",
+      imageUrl: "/machamp-pokemon-card.png",
     },
   ];
 
@@ -169,9 +175,8 @@ export default function Collection() {
       damage?: string[];
     };
     imageUrl?: string;
-    [key: string]: unknown;
   }) => {
-    const photos = [];
+    const photos: Array<{ type: string; url: string; index?: number }> = [];
 
     if (card.photos?.front) {
       photos.push({ type: "front", url: card.photos.front });
@@ -301,8 +306,8 @@ export default function Collection() {
               <div>
                 <p className="text-sm text-gray-600">Collection Started</p>
                 <p className="text-sm font-medium text-gray-700">
-                  {user?.joinedAt
-                    ? new Date(user.joinedAt).toISOString().split("T")[0]
+                  {user?.created_at
+                    ? new Date(user.created_at).toISOString().split("T")[0]
                     : "N/A"}
                 </p>
               </div>
@@ -402,7 +407,7 @@ export default function Collection() {
                     <div className="aspect-[3/4] overflow-hidden rounded-t-lg relative">
                       {currentPhoto?.url || card.imageUrl ? (
                         <Image
-                          src={currentPhoto?.url || card.imageUrl}
+                          src={currentPhoto?.url || card.imageUrl || ''}
                           alt={`${card.name} - ${
                             currentPhoto?.type || "front"
                           }`}
@@ -541,7 +546,7 @@ export default function Collection() {
                       <div className="relative">
                         {currentPhoto?.url || card.imageUrl ? (
                           <Image
-                            src={currentPhoto?.url || card.imageUrl}
+                            src={currentPhoto?.url || card.imageUrl || ''}
                             alt={`${card.name} - ${
                               currentPhoto?.type || "front"
                             }`}
