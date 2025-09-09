@@ -23,6 +23,7 @@ export interface CardData {
 
 export interface Card extends CardData {
   id: string;
+  user_id: string; // Required for cards in database
   created_at: string;
   updated_at?: string;
 }
@@ -168,9 +169,11 @@ class CardsService {
         throw error;
       }
 
-      // Process the data to ensure image URLs are properly formatted
+      // Process the data to ensure image URLs are properly formatted and user_id is present
       const processedCards = (data || []).map((card) => ({
         ...card,
+        // Ensure user_id is present (it should be from the database query)
+        user_id: card.user_id || userId,
         // Use standard column names
         front_image_url: card.front_image_url || "",
         back_image_url: card.back_image_url || "",

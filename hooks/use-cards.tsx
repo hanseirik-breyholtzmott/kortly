@@ -1,15 +1,8 @@
 // hooks/use-cards.ts
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { cardsService, type CardData } from "@/lib/supabase-cards";
+import { cardsService, type CardData, type Card } from "@/lib/supabase-cards";
 import type { User } from "@supabase/supabase-js";
-
-interface Card extends CardData {
-  id: string;
-  user_id: string;
-  created_at: string;
-  updated_at?: string;
-}
 
 interface UseCardsProps {
   user?: User;
